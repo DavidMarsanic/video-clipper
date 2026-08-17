@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Clipper</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main class="app">
+
+  <div class="url-row">
+    <input id="url" type="text" placeholder="Paste a video URL…" autocomplete="off" spellcheck="false">
+    <button id="load" class="btn">Load</button>
+  </div>
+
+  <div id="error" class="error hidden"></div>
+  <div id="loading" class="loading hidden">Loading…</div>
+
+  <div id="meta" class="meta hidden">
+    <img id="thumb" class="thumb" alt="">
+    <div class="meta-text">
+      <div id="title" class="title"></div>
+      <div id="subtitle" class="subtitle"></div>
+    </div>
+  </div>
+
+  <div id="previewWrap" class="preview-wrap hidden">
+    <video id="preview" class="preview" playsinline></video>
+    <div id="previewFallback" class="preview-fallback hidden"></div>
+  </div>
+
+  <section id="timelineSection" class="timeline-section hidden">
+    <div class="timeline" id="timeline">
+      <div class="track"></div>
+      <div class="range" id="range"></div>
+      <div class="playhead" id="playhead"></div>
+      <div class="handle" id="handleStart" data-handle="start" tabindex="0" role="slider" aria-label="Start"></div>
+      <div class="handle" id="handleEnd" data-handle="end" tabindex="0" role="slider" aria-label="End"></div>
+    </div>
+    <div class="timeline-labels">
+      <span id="labelZero">00:00</span>
+      <span id="labelDuration">00:00</span>
+    </div>
+
+    <div class="fields">
+      <label class="field">Start
+        <input id="startField" type="text" inputmode="decimal">
+      </label>
+      <label class="field">End
+        <input id="endField" type="text" inputmode="decimal">
+      </label>
+      <div class="duration">Duration: <span id="durationField">0.0</span> sec</div>
+    </div>
+
+    <div class="mode-row" role="group" aria-label="Range">
+      <button id="modeFull" class="mode-btn active" data-mode="full" type="button">Entire video</button>
+      <button id="modeClip" class="mode-btn" data-mode="clip" type="button">Selected clip</button>
+    </div>
+
+    <div class="options-row">
+      <label class="field">Format
+        <select id="format">
+          <option value="auto">Auto</option>
+          <option value="mp4">MP4</option>
+          <option value="audio">Audio</option>
+        </select>
+      </label>
+      <label class="field">Quality
+        <select id="quality">
+          <option value="best">Best</option>
+        </select>
+      </label>
+    </div>
+
+    <button id="save" class="btn save-btn" type="button">Save</button>
+
+    <div id="progress" class="progress hidden">
+      <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
+      <div id="progressLabel" class="progress-label"></div>
+      <button id="cancelJob" class="link-btn" type="button">Cancel</button>
+    </div>
+
+    <div id="doneActions" class="done-actions hidden">
+      <span id="doneMessage" class="done-message"></span>
+      <div class="done-buttons">
+        <button id="openFile" class="btn" type="button">Open file</button>
+        <button id="showFolder" class="btn" type="button">Show in folder</button>
+        <button id="copyPath" class="btn" type="button">Copy path</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+<script src="/app.js"></script>
+</body>
+</html>
