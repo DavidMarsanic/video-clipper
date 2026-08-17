@@ -8,6 +8,9 @@ No accounts, no library, no settings to hand-tune. Paste a URL (or let it
 auto-load from Securexe's current-context), preview it, drag a timeline to
 pick a range, save. Done.
 
+Opens as its own window — no browser tabs or address bar — even though it's
+implemented as a local web UI under the hood (see [How it works](#how-it-works)).
+
 ## Requirements
 
 Two external tools, both expected on `PATH` — neither is bundled:

@@ -144,8 +144,8 @@ func runUI(eng *engine.Engine, outputDir, initialURL string, port int) int {
 	}
 
 	fmt.Fprintln(os.Stderr, "Video Clipper running at", addr, "— press Ctrl+C to quit")
-	if err := browser.Open(target); err != nil {
-		fmt.Fprintln(os.Stderr, "couldn't open a browser automatically:", err)
+	if err := browser.OpenAppWindow(target); err != nil {
+		fmt.Fprintln(os.Stderr, "couldn't open a window automatically:", err)
 		fmt.Fprintln(os.Stderr, "open this URL manually:", target)
 	}
 
