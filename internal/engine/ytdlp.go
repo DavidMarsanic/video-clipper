@@ -42,6 +42,9 @@ var standardHeights = []int{2160, 1440, 1080, 720, 480, 360, 240, 144}
 // It never downloads or extracts a full playlist (--no-playlist): this tool
 // clips one video at a time.
 func (e *Engine) Inspect(ctx context.Context, rawURL string) (*VideoInfo, error) {
+	if e.toolsErr != nil {
+		return nil, e.toolsErr
+	}
 	cmd := exec.CommandContext(ctx, e.YtDlpPath, "-J", "--no-playlist", "--no-warnings", rawURL)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -56,26 +57,72 @@ func run(args []string) int {
 		return 0
 	}
 
+	widenPATH()
+
 	outputDir, err := paths.ResolveDownloadsDir(*output)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		return 1
 	}
 
-	eng, err := engine.New(outputDir)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "error:", err)
-		return 2
-	}
+	eng := engine.New(outputDir)
 
 	if *noBrowser {
+		if err := eng.CheckTools(); err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			return 2
+		}
 		return runHeadless(eng, headlessArgs{
 			url: *urlFlag, start: *start, end: *end,
 			format: *format, quality: *quality, outputDir: outputDir, json: *jsonOut,
 		})
 	}
 
+	// UI mode never hard-fails on a missing tool here — the server still
+	// starts and the browser still opens; CheckTools' error (if any) is
+	// instead returned by the engine the moment the UI actually tries to
+	// use it, where there's a page that can show it. A double-clicked app
+	// has no terminal for a startup error to go to, so failing silently
+	// before ever opening a window would be strictly worse.
 	return runUI(eng, outputDir, *urlFlag, *port)
+}
+
+// widenPATH adds common tool-install directories that a GUI-launched
+// process often lacks. macOS gives an app spawned outside a shell (Finder,
+// Spotlight, or another GUI app like a Securexe-style launcher — anything
+// that isn't a terminal) a bare PATH of /usr/bin:/bin:/usr/sbin:/sbin,
+// which doesn't include wherever Homebrew actually put yt-dlp/ffmpeg. A
+// plain terminal invocation already has all of this, so this only ever
+// adds directories that exist on disk and aren't already present —
+// nothing is removed or reordered.
+func widenPATH() {
+	home, _ := os.UserHomeDir()
+	candidates := []string{
+		"/opt/homebrew/bin", "/opt/homebrew/sbin", // Apple Silicon Homebrew
+		"/usr/local/bin", "/usr/local/sbin", // Intel Homebrew / common Linux
+		filepath.Join(home, ".local", "bin"),
+	}
+
+	current := os.Getenv("PATH")
+	existing := map[string]bool{}
+	for _, p := range filepath.SplitList(current) {
+		existing[p] = true
+	}
+
+	var toAdd []string
+	for _, dir := range candidates {
+		if dir == "" || existing[dir] {
+			continue
+		}
+		if info, err := os.Stat(dir); err == nil && info.IsDir() {
+			toAdd = append(toAdd, dir)
+		}
+	}
+	if len(toAdd) == 0 {
+		return
+	}
+	toAdd = append(toAdd, current)
+	os.Setenv("PATH", strings.Join(toAdd, string(os.PathListSeparator)))
 }
 
 // runUI is bare invocation's primary action: start the loopback server and

@@ -24,25 +24,46 @@ type Engine struct {
 	YtDlpPath        string
 	FFmpegPath       string
 	DefaultOutputDir string
+
+	toolsErr error // set by New if yt-dlp/ffmpeg weren't found; checked lazily
 }
 
-// New resolves yt-dlp and ffmpeg on PATH and returns a ready-to-use Engine,
-// or a wrapped ErrMissingDependency naming whichever tool is absent.
-func New(defaultOutputDir string) (*Engine, error) {
+// New resolves yt-dlp and ffmpeg on PATH and always returns a usable
+// Engine — it deliberately never fails outright. A double-clicked GUI app
+// has no terminal to print a startup error to, so a hard failure here
+// would mean the UI just never appears with no visible explanation at
+// all. Instead, a missing tool is recorded and surfaced the first time
+// something actually needs it (Inspect/Download/Clip/ExtractAudio), by
+// which point there's a browser tab open that can show the message.
+// CheckTools exposes the same error up front for callers that do have a
+// terminal, e.g. the -no-browser CLI path.
+func New(defaultOutputDir string) *Engine {
+	e := &Engine{DefaultOutputDir: defaultOutputDir}
 	ytdlp, err := findYtDlp()
 	if err != nil {
-		return nil, err
+		e.toolsErr = err
+		return e
 	}
 	ffmpeg, err := findFFmpeg()
 	if err != nil {
-		return nil, err
+		e.toolsErr = err
+		return e
 	}
-	return &Engine{YtDlpPath: ytdlp, FFmpegPath: ffmpeg, DefaultOutputDir: defaultOutputDir}, nil
+	e.YtDlpPath, e.FFmpegPath = ytdlp, ffmpeg
+	return e
+}
+
+// CheckTools reports the missing-dependency error recorded by New, if any.
+func (e *Engine) CheckTools() error {
+	return e.toolsErr
 }
 
 // Download saves the entire video (or, for Format:"audio", the entire
 // audio track) to opts.OutputDir.
 func (e *Engine) Download(ctx context.Context, url string, opts Options, onProgress func(Progress)) (*Result, error) {
+	if e.toolsErr != nil {
+		return nil, e.toolsErr
+	}
 	args := e.baseArgs(opts, nil, nil)
 	return e.run(ctx, url, args, opts.OutputDir, "", onProgress)
 }
@@ -54,6 +75,9 @@ func (e *Engine) Download(ctx context.Context, url string, opts Options, onProgr
 // ffmpeg) so the cut lands exactly on start/end while the rest of the clip
 // stays a stream copy — "exact cuts" without a blanket re-encode.
 func (e *Engine) Clip(ctx context.Context, url string, start, end time.Duration, opts Options, onProgress func(Progress)) (*Result, error) {
+	if e.toolsErr != nil {
+		return nil, e.toolsErr
+	}
 	args := e.baseArgs(opts, &start, &end)
 	return e.run(ctx, url, args, opts.OutputDir, clipLabel(start, end), onProgress)
 }
@@ -62,6 +86,9 @@ func (e *Engine) Clip(ctx context.Context, url string, start, end time.Duration,
 // When the source's native audio codec is already suitable it's copied,
 // not re-encoded (yt-dlp's --audio-format "best" behavior).
 func (e *Engine) ExtractAudio(ctx context.Context, url string, start, end *time.Duration, opts Options, onProgress func(Progress)) (*Result, error) {
+	if e.toolsErr != nil {
+		return nil, e.toolsErr
+	}
 	audioOpts := opts
 	audioOpts.Format = "audio"
 	args := e.baseArgs(audioOpts, start, end)
