@@ -11,6 +11,8 @@
     jobId: null,
     eventSource: null,
     lastPath: '',
+    previewUrl: '',
+    previewRetries: 0,
   };
 
   var el = function (id) { return document.getElementById(id); };
@@ -108,8 +110,42 @@
 
   // ---- boot --------------------------------------------------------
 
+  // ---- app-mode window auto-resize ------------------------------------
+
+  // Chrome's --app=<url> mode opens a real, single, chrome-less window
+  // (no tabs, no address bar) rather than a tab in the user's normal
+  // browser — and unlike a normal tab, script-driven resizeTo() is
+  // actually honored on that kind of window. So instead of a fixed size,
+  // the window tracks the content's real height: small for just the URL
+  // bar, taller once a preview/timeline/progress section appears —
+  // rather than reserving space for a state that isn't showing.
+  function setupAutoResize() {
+    if (typeof window.resizeTo !== 'function' || typeof ResizeObserver === 'undefined') return;
+
+    var targetInnerWidth = 720;
+    var lastHeight = 0;
+
+    function fit() {
+      var contentHeight = Math.ceil(document.documentElement.getBoundingClientRect().height);
+      if (Math.abs(contentHeight - lastHeight) < 2) return;
+      lastHeight = contentHeight;
+
+      var chromeH = Math.max(0, window.outerHeight - window.innerHeight);
+      var chromeW = Math.max(0, window.outerWidth - window.innerWidth);
+      var maxH = (window.screen.availHeight || 1000) - 60;
+
+      var h = Math.min(maxH, contentHeight + chromeH);
+      var w = targetInnerWidth + chromeW;
+      try { window.resizeTo(w, h); } catch (e) { /* not resizable in this context; fine */ }
+    }
+
+    new ResizeObserver(fit).observe(document.documentElement);
+    fit();
+  }
+
   function boot() {
     bindEvents();
+    setupAutoResize();
 
     // An explicit ?url= (set when the CLI was invoked with -url) wins over
     // Securexe's current-context detection.
@@ -214,11 +250,14 @@
     var fallback = el('previewFallback');
     el('previewWrap').classList.remove('hidden');
     fallback.classList.add('hidden');
+    state.previewRetries = 0;
     if (info.previewUrl) {
+      state.previewUrl = info.previewUrl;
       video.classList.remove('hidden');
       video.src = info.previewUrl;
       video.load();
     } else {
+      state.previewUrl = '';
       video.classList.add('hidden');
       video.removeAttribute('src');
       fallback.textContent = 'Preview unavailable for this video — timecodes still work.';
@@ -338,7 +377,21 @@
     video.addEventListener('click', function () {
       if (video.paused) video.play(); else video.pause();
     });
+    // The preview URL is a signed CDN link proxied through our own server
+    // (see /api/preview); it occasionally hiccups transiently the same way
+    // a clip's download sometimes does, so a load error gets a couple of
+    // quick retries before actually giving up and showing the fallback.
+    var PREVIEW_MAX_RETRIES = 2;
     video.addEventListener('error', function () {
+      if (!state.previewUrl) return; // no source was ever set — not a real failure
+      if (state.previewRetries < PREVIEW_MAX_RETRIES) {
+        state.previewRetries += 1;
+        setTimeout(function () {
+          if (video.src.indexOf(state.previewUrl) === -1) return; // a newer URL loaded meanwhile
+          video.load();
+        }, 900 * state.previewRetries);
+        return;
+      }
       video.classList.add('hidden');
       var fallback = el('previewFallback');
       fallback.textContent = 'Preview unavailable for this video — timecodes still work.';

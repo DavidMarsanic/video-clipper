@@ -21,7 +21,10 @@ func OpenAppWindow(target string) error {
 		args := []string{
 			"--app=" + target,
 			"--user-data-dir=" + appProfileDir(),
-			"--window-size=760,920",
+			// Starts small (just the URL bar); the page itself grows the
+			// window to fit its content as sections appear — see
+			// setupAutoResize in app.js.
+			"--window-size=760,220",
 			"--no-first-run",
 			"--no-default-browser-check",
 		}

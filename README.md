@@ -34,8 +34,9 @@ Zero third-party Go dependencies — the whole HTTP UI layer runs on
 
 ## Use
 
-Bare invocation opens a local browser UI — this is the primary, everyday
-way to use the tool:
+Bare invocation opens its own window — this is the primary, everyday way
+to use the tool. It starts small (just the URL bar) and grows to fit the
+preview/timeline once something's loaded:
 
 ```sh
 ./video-clipper                 # opens the UI; focuses the URL field
@@ -91,9 +92,25 @@ It then launches from Spotlight like any other app.
   the proxy always requests bounded ranges upstream regardless of what the
   browser asks for, so preview works the same for a 3-minute video and a
   3-hour one.
-- A brief CDN hiccup on a clip's boundary fetch (occasionally seen as an
-  ffmpeg failure from yt-dlp's section downloader) is retried automatically
-  before being surfaced as a real error.
+- CDN hiccups are common enough (googlevideo in particular intermittently
+  rejects an otherwise-normal request) that both the preview and the
+  actual download/clip/extract path retry automatically a couple of times
+  before surfacing anything as a real error.
+- Full downloads fetch a fragmented (DASH) source's fragments 4 at a time
+  (`--concurrent-fragments`) instead of yt-dlp's one-at-a-time default.
+  Clips don't get the same boost — `--download-sections` switches yt-dlp
+  to its ffmpeg-backed downloader, which reads over a single connection —
+  that's the cost of the accurate-cut-without-a-full-download tradeoff.
+  "Best" quality also does mean best: on a long source that can mean a
+  large, slow file, same as it would anywhere else.
+- The window itself is real Chrome/Edge/Brave/Chromium running in `--app=`
+  mode (no tabs, no address bar) rather than a full GUI toolkit: an actual
+  embedded webview needs a cgo binding to the OS's native WebKit/WebView2,
+  which would break the `CGO_ENABLED=0` cross-compile the brief requires.
+  The page resizes its own window via `ResizeObserver` + `window.resizeTo`
+  as content appears — Chrome allows script-driven resizing on this kind
+  of window, unlike a normal tab. Falls back to the OS's default browser
+  if no Chromium-family browser is found.
 
 The engine is UI-agnostic (`internal/engine`): `Inspect`, `Download`,
 `Clip`, `ExtractAudio`. The HTTP layer (`internal/server`) is one consumer

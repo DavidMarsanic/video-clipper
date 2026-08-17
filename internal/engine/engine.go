@@ -107,6 +107,13 @@ func (e *Engine) baseArgs(opts Options, start, end *time.Duration) []string {
 		"--newline", "--no-warnings", "--no-playlist",
 		"--ffmpeg-location", filepath.Dir(e.FFmpegPath),
 		"-f", formatSelector(opts.Format, opts.Quality),
+		// Fetch a fragmented (DASH) source's fragments in parallel instead
+		// of yt-dlp's default of one at a time. Only the full-video/full-
+		// audio path (yt-dlp's own native downloader) honors this — a
+		// ranged Clip/ExtractAudio call switches to the ffmpeg-backed
+		// downloader via --download-sections below, which fetches over a
+		// single connection regardless, so this is simply unused there.
+		"--concurrent-fragments", "4",
 	}
 
 	if opts.Format == "audio" {
