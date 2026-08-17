@@ -20,7 +20,8 @@ Two external tools, both expected on `PATH` — neither is bundled:
   (yt-dlp invokes it internally for merges, accurate section clips, and
   audio extraction)
 
-On macOS: `brew install yt-dlp ffmpeg`.
+On macOS: `brew install yt-dlp ffmpeg`. On Windows: grab both from their
+own installers/release pages and make sure they end up on `PATH`.
 
 ## Build
 
