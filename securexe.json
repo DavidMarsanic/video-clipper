@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "dependencies": [
+    {
+      "id": "yt-dlp",
+      "name": "yt-dlp",
+      "homepage": "https://github.com/yt-dlp/yt-dlp",
+      "install": {
+        "macos": "brew install yt-dlp"
+      }
+    },
+    {
+      "id": "ffmpeg",
+      "name": "FFmpeg",
+      "homepage": "https://ffmpeg.org",
+      "install": {
+        "macos": "brew install ffmpeg"
+      }
+    }
+  ]
+}
