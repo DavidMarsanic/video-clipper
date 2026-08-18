@@ -17,5 +17,16 @@
         "macos": "brew install ffmpeg"
       }
     }
+  ],
+  "requirements": [
+    {
+      "id": "chromium-browser",
+      "name": "Chrome or Chromium-based browser",
+      "homepage": "https://www.google.com/chrome/",
+      "note": "Any Chromium-based browser works: Google Chrome, Chromium, Brave, Microsoft Edge, or Arc. Used to render the app's own UI window, same as instaframe.",
+      "install": {
+        "macos": "brew install --cask google-chrome"
+      }
+    }
   ]
 }
