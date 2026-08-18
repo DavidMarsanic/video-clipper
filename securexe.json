@@ -12,7 +12,7 @@
     {
       "id": "ffmpeg",
       "name": "FFmpeg",
-      "homepage": "https://ffmpeg.org",
+      "homepage": "https://github.com/FFmpeg/FFmpeg",
       "install": {
         "macos": "brew install ffmpeg"
       }
