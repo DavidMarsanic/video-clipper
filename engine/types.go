@@ -1,5 +1,8 @@
 // Package engine wraps yt-dlp and ffmpeg behind a small, UI-agnostic
-// interface: Inspect, Download, Clip, ExtractAudio.
+// interface: Inspect, Download, Clip, ExtractAudio. It's a public
+// (non-internal) package on purpose — clip-and-gif imports it directly as
+// a real Go module dependency to fetch/clip a source URL, rather than
+// duplicating this logic.
 package engine
 
 import "errors"

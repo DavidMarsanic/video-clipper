@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/DavidMarsanic/video-clipper/internal/browser"
-	"github.com/DavidMarsanic/video-clipper/internal/engine"
+	"github.com/DavidMarsanic/video-clipper/engine"
 	"github.com/DavidMarsanic/video-clipper/internal/paths"
 	"github.com/DavidMarsanic/video-clipper/internal/server"
 )

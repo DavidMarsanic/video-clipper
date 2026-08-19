@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DavidMarsanic/video-clipper/internal/engine"
+	"github.com/DavidMarsanic/video-clipper/engine"
 	"github.com/DavidMarsanic/video-clipper/internal/jobs"
 	"github.com/DavidMarsanic/video-clipper/web"
 )

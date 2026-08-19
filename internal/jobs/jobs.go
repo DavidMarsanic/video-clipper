@@ -29,10 +29,10 @@ type Job struct {
 	ID     string
 	Cancel context.CancelFunc
 
-	mu   sync.Mutex
-	last Event
-	done bool
-	subs map[chan Event]struct{}
+	mu      sync.Mutex
+	history []Event
+	done    bool
+	subs    map[chan Event]struct{}
 }
 
 // Registry holds all jobs created during this process's lifetime.
@@ -93,11 +93,11 @@ func (r *Registry) HasActive() bool {
 	return false
 }
 
-// Publish records the event as the job's latest state and fans it out to
-// any live subscribers (SSE connections).
+// Publish appends the event to the job's history and fans it out to any
+// live subscribers (SSE connections).
 func (j *Job) Publish(e Event) {
 	j.mu.Lock()
-	j.last = e
+	j.history = append(j.history, e)
 	if e.Stage == "done" || e.Stage == "error" || e.Stage == "canceled" {
 		j.done = true
 	}
@@ -115,22 +115,32 @@ func (j *Job) Publish(e Event) {
 	}
 }
 
-// Subscribe returns a channel of future events. If the job already has a
-// last-known state, it's replayed immediately so a late subscriber isn't
-// left waiting. The returned cancel func must be called when done reading.
+// Subscribe returns a channel carrying every event published so far,
+// followed by any future ones. A job that finishes fast can complete
+// before the browser's EventSource connection even opens; replaying only
+// the *last* event (the previous behavior) meant a fast job's whole
+// progress history was invisible to a late subscriber, and only the
+// terminal event ever arrived. The channel is registered into subs
+// (making it eligible for live events) only after the full history has
+// been queued into its buffer, all under the same lock Publish uses — so
+// no event can be delivered twice or dropped in the handoff between
+// "replay" and "live". The returned cancel func must be called when done
+// reading.
 func (j *Job) Subscribe() (<-chan Event, func()) {
-	ch := make(chan Event, 16)
 	j.mu.Lock()
-	j.subs[ch] = struct{}{}
-	last, done := j.last, j.done
+	ch := make(chan Event, len(j.history)+32)
+	for _, e := range j.history {
+		ch <- e // never blocks: capacity was sized to fit the whole history
+	}
+	done := j.done
+	if !done {
+		j.subs[ch] = struct{}{}
+	}
 	j.mu.Unlock()
 
-	if last.Stage != "" {
-		ch <- last
-		if done {
-			close(ch)
-			return ch, func() {}
-		}
+	if done {
+		close(ch)
+		return ch, func() {}
 	}
 
 	cancel := func() {
