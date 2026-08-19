@@ -144,9 +144,17 @@ func runUI(eng *engine.Engine, outputDir, initialURL string, port int) int {
 	}
 
 	fmt.Fprintln(os.Stderr, "Video Clipper running at", addr, "— press Ctrl+C to quit")
-	if err := browser.OpenAppWindow(target); err != nil {
-		fmt.Fprintln(os.Stderr, "couldn't open a window automatically:", err)
-		fmt.Fprintln(os.Stderr, "open this URL manually:", target)
+
+	// When a host process (securexe-launcher) is the one showing the UI —
+	// in its own native window, so it can get a real Dock identity instead
+	// of a spawned Chrome window — it sets this before starting us and
+	// watches this same stderr line to discover the URL. Opening our own
+	// Chrome window too would just leave a second, redundant one.
+	if os.Getenv("SECUREXE_HOSTED") == "" {
+		if err := browser.OpenAppWindow(target); err != nil {
+			fmt.Fprintln(os.Stderr, "couldn't open a window automatically:", err)
+			fmt.Fprintln(os.Stderr, "open this URL manually:", target)
+		}
 	}
 
 	<-ctx.Done()
