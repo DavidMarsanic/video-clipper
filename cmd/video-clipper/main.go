@@ -66,6 +66,9 @@ func run(args []string) int {
 	}
 
 	eng := engine.New(outputDir)
+	for _, note := range eng.VersionNotes {
+		fmt.Fprintln(os.Stderr, "note:", note)
+	}
 
 	if *noBrowser {
 		if err := eng.CheckTools(); err != nil {

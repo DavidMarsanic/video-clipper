@@ -4,7 +4,9 @@
     {
       "id": "yt-dlp",
       "name": "yt-dlp",
+      "version": "2026.07.04",
       "homepage": "https://github.com/yt-dlp/yt-dlp",
+      "note": "Not bundled, expected on PATH. Version is what this app was last tested against — see engine/tools.go's checkToolVersions for the runtime drift check.",
       "install": {
         "macos": "brew install yt-dlp"
       }
@@ -12,7 +14,9 @@
     {
       "id": "ffmpeg",
       "name": "FFmpeg",
+      "version": "9.0.1",
       "homepage": "https://github.com/FFmpeg/FFmpeg",
+      "note": "Not bundled, expected on PATH. Version is what this app was last tested against — see engine/tools.go's checkToolVersions for the runtime drift check.",
       "install": {
         "macos": "brew install ffmpeg"
       }

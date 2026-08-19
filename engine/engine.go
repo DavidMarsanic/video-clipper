@@ -25,6 +25,15 @@ type Engine struct {
 	FFmpegPath       string
 	DefaultOutputDir string
 
+	// VersionNotes is populated by New — one entry per resolved tool whose
+	// version doesn't match what this engine was last tested against (see
+	// checkToolVersions in tools.go). Empty when everything matches, or
+	// when a version check itself failed (a tool refusing --version isn't
+	// treated as drift). Nothing here is enforced or blocking — this
+	// exists purely so version drift is visible to whoever's running the
+	// app, not silent.
+	VersionNotes []string
+
 	toolsErr error // set by New if yt-dlp/ffmpeg weren't found; checked lazily
 }
 
@@ -50,6 +59,7 @@ func New(defaultOutputDir string) *Engine {
 		return e
 	}
 	e.YtDlpPath, e.FFmpegPath = ytdlp, ffmpeg
+	e.VersionNotes = checkToolVersions(ytdlp, ffmpeg)
 	return e
 }
 
