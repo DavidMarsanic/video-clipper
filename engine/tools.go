@@ -104,7 +104,7 @@ func isExecutableFile(path string) bool {
 
 // expectedYtDlpVersion and expectedFFmpegVersion are what this engine was
 // actually last tested against — keep in sync with the "version" field in
-// securexe.json's matching dependency entry by hand; nothing enforces the
+// brightencode.json's matching dependency entry by hand; nothing enforces the
 // two staying equal, but a mismatch between them here is a real bug.
 const (
 	expectedYtDlpVersion  = "2026.07.04"
